@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matteövningar</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .number-range {
+            margin-bottom: 15px;
+        }
+        .question {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px;
+        }
+        .question p {
+            margin: 0;
+            padding-right: 10px;
+        }
+        input {
+            padding: 8px;
+            font-size: 16px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Matteövningar</h1>
+
+    <div class="number-range">
+        <label for="range">Välj talintervall: </label>
+        <select id="range">
+            <option value="10">1 - 10</option>
+            <option value="20">1 - 20</option>
+            <option value="30">1 - 30</option>
+            <option value="50">1 - 50</option>
+            <option value="100">1 - 100</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="operation">Välj operation: </label>
+        <select id="operation">
+            <option value="add">Addition</option>
+            <option value="subtract">Subtraktion</option>
+            <option value="multiply">Multiplikation</option>
+            <option value="divide">Division</option>
+        </select>
+    </div>
+
+    <div>
+        <button class="button" onclick="generateNumbers()">Generera tal</button>
+    </div>
+
+    <div id="questions"></div>
+
+    <button class="button" onclick="checkAnswers()">Kolla svaren</button>
+</div>
+
+<script>
+    let correctAnswers = [];
+
+    function generateNumbers() {
+        const range = parseInt(document.getElementById('range').value);
+        const operation = document.getElementById('operation').value;
+
+        correctAnswers = [];  // Nollställ tidigare svar
+        let questionsHtml = '';
+
+        for (let i = 1; i <= 5; i++) {
+            let num1 = Math.floor(Math.random() * range) + 1;
+            let num2 = Math.floor(Math.random() * range) + 1;
+
+            let questionText = '';
+            let correctAnswer;
+
+            if (operation === 'subtract') {
+                if (num1 < num2) [num1, num2] = [num2, num1]; // Undvik negativa tal
+                questionText = `${num1} - ${num2} = ?`;
+                correctAnswer = num1 - num2;
+            } else if (operation === 'multiply') {
+                questionText = `${num1} × ${num2} = ?`;
+                correctAnswer = num1 * num2;
+            } else if (operation === 'divide') {
+                num1 = Math.floor(Math.random() * range) + 1; // Hela intervallet
+
+                let divisors = [];
+                for (let j = 2; j <= num1; j++) { // Samla alla riktiga divisorer (exkl. 1)
+                    if (num1 % j === 0) divisors.push(j);
+                }
+
+                if (divisors.length > 0) {
+                    num2 = divisors[Math.floor(Math.random() * divisors.length)];
+                } else {
+                    num2 = 1; // Fallback (bör inte hända ofta)
+                }
+
+                questionText = `${num1} ÷ ${num2} = ?`;
+                correctAnswer = num1 / num2;
+            } else {
+                questionText = `${num1} + ${num2} = ?`;
+                correctAnswer = num1 + num2;
+            }
+
+            correctAnswers.push(correctAnswer);
+            questionsHtml += `<div class="question">
+                                <p>${questionText}</p>
+                                <input type="number" id="answer${i}" onkeypress="handleEnter(event)">
+                              </div>`;
+        }
+
+        document.getElementById('questions').innerHTML = questionsHtml;
+    }
+
+    function checkAnswers() {
+        for (let i = 1; i <= 5; i++) {
+            const inputField = document.getElementById(`answer${i}`);
+            const userAnswer = parseFloat(inputField.value);
+
+            if (userAnswer === correctAnswers[i - 1]) {
+                inputField.style.backgroundColor = 'lightgreen'; // Rätt svar
+            } else {
+                inputField.style.backgroundColor = 'lightcoral'; // Fel svar
+            }
+        }
+    }
+
+    function handleEnter(event) {
+        if (event.key === "Enter") {
+            checkAnswers();
+        }
+    }
+</script>
+
+</body>
+</html>
