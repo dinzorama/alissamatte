@@ -1,167 +1,400 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matteövningar</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f0f8ff;
-            text-align: center;
-            margin-top: 50px;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            display: inline-block;
-        }
-        .button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            margin: 10px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .number-range {
-            margin-bottom: 15px;
-        }
-        .question {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px;
-        }
-        .question p {
-            margin: 0;
-            padding-right: 10px;
-        }
-        input {
-            padding: 8px;
-            font-size: 16px;
-            margin: 10px 0;
-            border-radius: 5px;
-            text-align: center;
-            width: 80px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matteövning</title>
+  <style>
+    :root{
+      --bg:#f7fafc;
+      --card:#ffffff;
+      --ink:#1a202c;
+      --muted:#4a5568;
+      --brand:#2563eb;
+      --right:#16a34a;
+      --wrong:#dc2626;
+      --shadow:0 10px 25px rgba(0,0,0,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:var(--bg); color:var(--ink);
+      display:flex; min-height:100svh; align-items:center; justify-content:center; padding:24px;
+    }
+    .app{width:min(960px,100%);}
+    header{display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px}
+    h1{font-size:clamp(22px,3vw,32px); margin:0}
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+    .controls{display:grid; grid-template-columns:1fr; gap:12px}
+    @media (min-width:740px){
+      .controls{grid-template-columns: 1.3fr 1.2fr 1fr}
+    }
+    fieldset{border:0; padding:0; margin:0}
+    legend{font-weight:600; margin-bottom:8px}
+    .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    label{display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f1f5f9; border-radius:12px; cursor:pointer}
+    select, input[type="number"], input[type="text"]{padding:10px 12px; border-radius:12px; border:1px solid #e2e8f0; font-size:16px; width:100%;}
+    button{appearance:none; border:0; background:var(--brand); color:white; padding:12px 16px; border-radius:14px; font-weight:700; cursor:pointer; box-shadow:var(--shadow);}
+    button.secondary{background:#e2e8f0; color:#111827}
+    button:disabled{opacity:.5; cursor:not-allowed}
+
+    .play{margin-top:16px; display:grid; grid-template-columns:1fr; gap:16px; align-items:start}
+    @media (min-width:740px){
+      .play{grid-template-columns:1.1fr .9fr}
+    }
+    .problem{display:flex; flex-direction:column; gap:12px}
+    .problem .q{font-size:clamp(28px,5vw,48px); font-weight:800; text-align:center}
+    .answer{display:flex; gap:10px}
+    .answer input{flex:1; text-align:center; font-weight:700; font-size:20px}
+
+    .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+    .stat{background:#f8fafc; border-radius:14px; padding:12px}
+    .stat .label{font-size:12px; color:var(--muted)}
+    .stat .value{font-size:22px; font-weight:800}
+
+    .progress{height:12px; background:#e5e7eb; border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--brand), #06b6d4); transition:width .25s ease}
+
+    .feedback{min-height:28px; font-weight:700}
+    .feedback.ok{color:var(--right)}
+    .feedback.no{color:var(--wrong)}
+
+    .timer{font-variant-numeric:tabular-nums; font-weight:800}
+
+    .tiny{font-size:12px; color:var(--muted)}
+
+    /* konfetti */
+    .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden}
+    .confetti i{position:absolute; width:10px; height:14px; opacity:0; transform:translateY(-20px) rotate(0deg); border-radius:3px}
+    @keyframes pop{to{transform:translateY(100vh) rotate(720deg); opacity:1}}
+  </style>
 </head>
 <body>
+  <div class="app">
+    <header>
+      <h1>Matteövning</h1>
+      <div class="tiny">Allt körs lokalt i din webbläsare</div>
+    </header>
+    <section class="card controls">
+      <fieldset>
+        <legend>Räknesätt</legend>
+        <div class="row">
+          <label><input type="checkbox" id="opAdd" checked> Addition (+)</label>
+          <label><input type="checkbox" id="opSub" checked> Subtraktion (−)</label>
+          <label><input type="checkbox" id="opMul" checked> Multiplikation (×)</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Svårighetsgrad</legend>
+        <div class="row">
+          <select id="difficulty">
+            <option value="easy">Lätt (0–10)</option>
+            <option value="medium" selected>Medel (0–20)</option>
+            <option value="hard">Svår (0–99)</option>
+          </select>
+          <select id="timesTable">
+            <option value="mix" selected>Tabell: Blanda</option>
+            <option value="1">Tabell 1</option>
+            <option value="2">Tabell 2</option>
+            <option value="3">Tabell 3</option>
+            <option value="4">Tabell 4</option>
+            <option value="5">Tabell 5</option>
+            <option value="6">Tabell 6</option>
+            <option value="7">Tabell 7</option>
+            <option value="8">Tabell 8</option>
+            <option value="9">Tabell 9</option>
+            <option value="10">Tabell 10</option>
+            <option value="11">Tabell 11</option>
+            <option value="12">Tabell 12</option>
+          </select>
+        </div>
+        <div class="tiny">Tips: Välj en specifik tabell om du vill fokusera på multiplikationstabeller.</div>
+      </fieldset>
+      <fieldset>
+        <legend>Läge</legend>
+        <div class="row">
+          <select id="mode">
+            <option value="practice" selected>Öva (lugnt tempo)</option>
+            <option value="challenge">Snabb utmaning (timer)</option>
+          </select>
+          <select id="duration">
+            <option value="30">30 sek</option>
+            <option value="60" selected>60 sek</option>
+            <option value="120">120 sek</option>
+          </select>
+          <button id="startBtn">Starta</button>
+          <button id="stopBtn" class="secondary" disabled>Stoppa</button>
+        </div>
+      </fieldset>
+    </section>
 
-<div class="container">
-    <h1>Matteövningar</h1>
+    <section class="play">
+      <div class="card problem">
+        <div class="q" id="question">Klicka på Starta för att börja</div>
+        <div class="answer">
+          <input id="answer" type="number" inputmode="numeric" placeholder="Skriv svaret här" disabled />
+          <button id="submitBtn" disabled>Svara</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <div class="progress"><div class="bar" id="progBar"></div></div>
+      </div>
 
-    <div class="number-range">
-        <label for="range">Välj talintervall: </label>
-        <select id="range">
-            <option value="10">1 - 10</option>
-            <option value="20">1 - 20</option>
-            <option value="30">1 - 30</option>
-            <option value="50">1 - 50</option>
-            <option value="100">1 - 100</option>
-        </select>
-    </div>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="label">Poäng</div><div class="value" id="score">0</div></div>
+          <div class="stat"><div class="label">Rätt i rad</div><div class="value" id="streak">0</div></div>
+          <div class="stat"><div class="label">Frågor</div><div class="value" id="count">0</div></div>
+          <div class="stat"><div class="label">Tid</div><div class="value timer" id="time">–</div></div>
+        </div>
+        <div class="tiny" style="margin-top:8px">Högsta poäng (utmaning): <span id="highscore">0</span></div>
+      </div>
+    </section>
+  </div>
+  <div class="confetti" id="confetti"></div>
 
-    <div>
-        <label for="operation">Välj operation: </label>
-        <select id="operation">
-            <option value="add">Addition</option>
-            <option value="subtract">Subtraktion</option>
-            <option value="multiply">Multiplikation</option>
-            <option value="divide">Division</option>
-        </select>
-    </div>
-
-    <div>
-        <button class="button" onclick="generateNumbers()">Generera tal</button>
-    </div>
-
-    <div id="questions"></div>
-
-    <button class="button" onclick="checkAnswers()">Kolla svaren</button>
-</div>
-
-<script>
-    let correctAnswers = [];
-
-    function generateNumbers() {
-        const range = parseInt(document.getElementById('range').value);
-        const operation = document.getElementById('operation').value;
-
-        correctAnswers = [];  // Nollställ tidigare svar
-        let questionsHtml = '';
-
-        for (let i = 1; i <= 5; i++) {
-            let num1 = Math.floor(Math.random() * range) + 1;
-            let num2 = Math.floor(Math.random() * range) + 1;
-
-            let questionText = '';
-            let correctAnswer;
-
-            if (operation === 'subtract') {
-                if (num1 < num2) [num1, num2] = [num2, num1]; // Undvik negativa tal
-                questionText = `${num1} - ${num2} = ?`;
-                correctAnswer = num1 - num2;
-            } else if (operation === 'multiply') {
-                questionText = `${num1} × ${num2} = ?`;
-                correctAnswer = num1 * num2;
-            } else if (operation === 'divide') {
-                num1 = Math.floor(Math.random() * range) + 1; // Hela intervallet
-
-                let divisors = [];
-                for (let j = 2; j <= num1; j++) { // Samla alla riktiga divisorer (exkl. 1)
-                    if (num1 % j === 0) divisors.push(j);
-                }
-
-                if (divisors.length > 0) {
-                    num2 = divisors[Math.floor(Math.random() * divisors.length)];
-                } else {
-                    num2 = 1; // Fallback (bör inte hända ofta)
-                }
-
-                questionText = `${num1} ÷ ${num2} = ?`;
-                correctAnswer = num1 / num2;
-            } else {
-                questionText = `${num1} + ${num2} = ?`;
-                correctAnswer = num1 + num2;
-            }
-
-            correctAnswers.push(correctAnswer);
-            questionsHtml += `<div class="question">
-                                <p>${questionText}</p>
-                                <input type="number" id="answer${i}" onkeypress="handleEnter(event)">
-                              </div>`;
-        }
-
-        document.getElementById('questions').innerHTML = questionsHtml;
+  <script>
+  ;(() => {
+    const ui = {
+      opAdd: document.getElementById('opAdd'),
+      opSub: document.getElementById('opSub'),
+      opMul: document.getElementById('opMul'),
+      difficulty: document.getElementById('difficulty'),
+      timesTable: document.getElementById('timesTable'),
+      mode: document.getElementById('mode'),
+      duration: document.getElementById('duration'),
+      startBtn: document.getElementById('startBtn'),
+      stopBtn: document.getElementById('stopBtn'),
+      question: document.getElementById('question'),
+      answer: document.getElementById('answer'),
+      submitBtn: document.getElementById('submitBtn'),
+      feedback: document.getElementById('feedback'),
+      progBar: document.getElementById('progBar'),
+      score: document.getElementById('score'),
+      streak: document.getElementById('streak'),
+      count: document.getElementById('count'),
+      time: document.getElementById('time'),
+      confetti: document.getElementById('confetti'),
+      highscore: document.getElementById('highscore'),
     }
 
-    function checkAnswers() {
-        for (let i = 1; i <= 5; i++) {
-            const inputField = document.getElementById(`answer${i}`);
-            const userAnswer = parseFloat(inputField.value);
-
-            if (userAnswer === correctAnswers[i - 1]) {
-                inputField.style.backgroundColor = 'lightgreen'; // Rätt svar
-            } else {
-                inputField.style.backgroundColor = 'lightcoral'; // Fel svar
-            }
-        }
+    const state = {
+      playing:false,
+      challenge:false,
+      remaining:0,
+      timerId:null,
+      score:0,
+      streak:0,
+      count:0,
+      a:0, b:0, op:'+', ans:0,
     }
 
-    function handleEnter(event) {
-        if (event.key === "Enter") {
-            checkAnswers();
-        }
+    // Ljud (Web Audio) – inga filer krävs
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    function beep(freq=880, dur=120){
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.type = 'sine'; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.01);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur/1000);
+      o.stop(audioCtx.currentTime + dur/1000);
     }
-</script>
+    function rightSound(){beep(1046,120); setTimeout(()=>beep(1318,150),80)}
+    function wrongSound(){beep(196,160)}
 
+    // Konfetti – enkel, performant
+    function popConfetti(){
+      const n = 80;
+      const colors = ['#60a5fa','#34d399','#fbbf24','#f472b6','#93c5fd','#fdba74'];
+      for(let i=0;i<n;i++){
+        const el = document.createElement('i');
+        el.style.left = Math.random()*100+'vw';
+        el.style.background = colors[Math.random()*colors.length|0];
+        el.style.animation = `pop ${800 + Math.random()*900}ms ease-out forwards`;
+        el.style.transform = `translateY(-10px) rotate(${Math.random()*360}deg)`;
+        el.style.opacity = .9;
+        ui.confetti.appendChild(el);
+        setTimeout(()=> el.remove(), 1800);
+      }
+    }
+
+    function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+
+    function ranges(){
+      const d = ui.difficulty.value;
+      if(d==='easy') return [0,10]
+      if(d==='medium') return [0,20]
+      return [0,99]
+    }
+
+    function chooseOp(){
+      const ops = []
+      if(ui.opAdd.checked) ops.push('+')
+      if(ui.opSub.checked) ops.push('−')
+      if(ui.opMul.checked) ops.push('×')
+      if(ops.length===0){ ops.push('+') }
+      // Om specifik tabell valts, prioritera multiplikation
+      if(ui.timesTable.value!== 'mix') return '×'
+      return ops[Math.random()*ops.length|0]
+    }
+
+    function nextProblem(){
+      const [min,max] = ranges();
+      let a=0,b=0,op=chooseOp(), ans=0
+
+      if(op==='×'){
+        const tbl = ui.timesTable.value
+        if(tbl==='mix'){
+          a = randInt(min, max>12?12:max)
+        } else {
+          a = parseInt(tbl,10)
+        }
+        b = randInt(0, 12)
+        ans = a*b
+      } else if(op==='−'){
+        a = randInt(min,max); b = randInt(min,max)
+        if(b>a) [a,b]=[b,a] // undvik negativa
+        ans = a-b
+      } else { // +
+        a = randInt(min,max); b = randInt(min,max)
+        ans = a+b
+      }
+      state.a=a; state.b=b; state.op=op; state.ans=ans
+      ui.question.textContent = `${a} ${op} ${b} = ?`
+      ui.answer.value = ''
+      ui.answer.focus()
+    }
+
+    function updateStats(){
+      ui.score.textContent = state.score
+      ui.streak.textContent = state.streak
+      ui.count.textContent = state.count
+      if(state.challenge){
+        const total = parseInt(ui.duration.value,10)
+        const gone = total - state.remaining
+        const pct = Math.max(0, Math.min(100, (gone/total)*100))
+        ui.progBar.style.width = pct + '%'
+      } else {
+        // använd streak som en liten progress-känsla upp till 10
+        const pct = Math.min(100, (state.streak/10)*100)
+        ui.progBar.style.width = pct + '%'
+      }
+    }
+
+    function showFeedback(ok, correctAns){
+      ui.feedback.className = 'feedback ' + (ok? 'ok':'no')
+      ui.feedback.textContent = ok ? 'Rätt! Bra jobbat! 🎉' : `Inte riktigt. Rätt svar är ${correctAns}. Försök igen!`
+    }
+
+    function checkAnswer(){
+      if(!state.playing) return
+      const val = Number(ui.answer.value)
+      const ok = (val === state.ans)
+      state.count++
+      if(ok){
+        state.score += 10
+        state.streak++
+        showFeedback(true)
+        rightSound()
+        popConfetti()
+        nextProblem()
+      } else {
+        state.streak = 0
+        showFeedback(false, state.ans)
+        wrongSound()
+        // låt samma uppgift stå kvar, uppmuntra försök igen
+      }
+      updateStats()
+    }
+
+    function setPlaying(on){
+      state.playing = on
+      ui.answer.disabled = !on
+      ui.submitBtn.disabled = !on
+      ui.stopBtn.disabled = !on
+      ui.startBtn.disabled = on
+      if(!on){ ui.progBar.style.width = '0%'; ui.time.textContent='–' }
+    }
+
+    function startPractice(){
+      state.challenge = false
+      state.score=0; state.streak=0; state.count=0
+      ui.feedback.textContent = ''
+      setPlaying(true)
+      nextProblem(); updateStats()
+    }
+
+    function startChallenge(){
+      state.challenge = true
+      state.score=0; state.streak=0; state.count=0
+      state.remaining = parseInt(ui.duration.value,10)
+      ui.feedback.textContent = ''
+      setPlaying(true)
+      nextProblem(); updateStats()
+      tick()
+    }
+
+    function tick(){
+      if(!state.playing || !state.challenge) return
+      ui.time.textContent = state.remaining + ' s'
+      if(state.remaining<=0){
+        endChallenge()
+        return
+      }
+      state.remaining--
+      updateStats()
+      state.timerId = setTimeout(tick, 1000)
+    }
+
+    function endChallenge(){
+      clearTimeout(state.timerId)
+      state.timerId=null
+      setPlaying(false)
+      ui.question.textContent = 'Tiden är slut!'
+      ui.feedback.textContent = `Du fick ${state.score} poäng på ${ui.duration.value} sekunder.`
+      // spara highscore
+      const key = 'matte_highscore_' + ui.duration.value
+      const best = parseInt(localStorage.getItem(key)||'0',10)
+      if(state.score>best){
+        localStorage.setItem(key, String(state.score))
+      }
+      refreshHighscore()
+    }
+
+    function refreshHighscore(){
+      const key = 'matte_highscore_' + ui.duration.value
+      const best = parseInt(localStorage.getItem(key)||'0',10)
+      ui.highscore.textContent = best
+    }
+
+    function stopAll(){
+      clearTimeout(state.timerId); state.timerId=null
+      setPlaying(false)
+      ui.question.textContent = 'Klicka på Starta för att börja'
+      ui.feedback.textContent = ''
+    }
+
+    // Events
+    ui.startBtn.addEventListener('click', ()=>{
+      (ui.mode.value==='challenge') ? startChallenge() : startPractice()
+    })
+    ui.stopBtn.addEventListener('click', stopAll)
+    ui.submitBtn.addEventListener('click', checkAnswer)
+    ui.answer.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter') checkAnswer()
+    })
+    ui.mode.addEventListener('change', ()=>{
+      document.querySelector('label[for="duration"]')
+      refreshHighscore();
+    })
+    ui.duration.addEventListener('change', refreshHighscore)
+
+    // Init
+    refreshHighscore()
+  })()
+  </script>
 </body>
 </html>
