@@ -1,400 +1,515 @@
+<!-- /index.html -->
 <!DOCTYPE html>
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Matteövning</title>
+  <title>Övningar – Matematik & Klocka</title>
   <style>
     :root{
-      --bg:#f7fafc;
-      --card:#ffffff;
-      --ink:#1a202c;
-      --muted:#4a5568;
-      --brand:#2563eb;
-      --right:#16a34a;
-      --wrong:#dc2626;
-      --shadow:0 10px 25px rgba(0,0,0,.08);
-      --radius:18px;
+      --bg:#f7fafc; --card:#ffffff; --ink:#1a202c; --muted:#4a5568;
+      --brand:#2563eb; --right:#16a34a; --wrong:#dc2626;
+      --shadow:0 10px 25px rgba(0,0,0,.08); --radius:18px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
       background:var(--bg); color:var(--ink);
       display:flex; min-height:100svh; align-items:center; justify-content:center; padding:24px;
     }
-    .app{width:min(960px,100%);}
+    .app{width:min(1040px,100%)}
     header{display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px}
     h1{font-size:clamp(22px,3vw,32px); margin:0}
     .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
     .controls{display:grid; grid-template-columns:1fr; gap:12px}
-    @media (min-width:740px){
-      .controls{grid-template-columns: 1.3fr 1.2fr 1fr}
-    }
+    @media (min-width:860px){ .controls{grid-template-columns:1.2fr 1.2fr 1fr} }
     fieldset{border:0; padding:0; margin:0}
     legend{font-weight:600; margin-bottom:8px}
     .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
     label{display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f1f5f9; border-radius:12px; cursor:pointer}
-    select, input[type="number"], input[type="text"]{padding:10px 12px; border-radius:12px; border:1px solid #e2e8f0; font-size:16px; width:100%;}
-    button{appearance:none; border:0; background:var(--brand); color:white; padding:12px 16px; border-radius:14px; font-weight:700; cursor:pointer; box-shadow:var(--shadow);}
+    select, input[type="number"], input[type="text"]{
+      padding:10px 12px; border-radius:12px; border:1px solid #e2e8f0; font-size:16px; width:100%;
+    }
+    input[type="range"]{width:100%}
+    button{appearance:none; border:0; background:var(--brand); color:#fff; padding:12px 16px; border-radius:14px; font-weight:700; cursor:pointer; box-shadow:var(--shadow)}
     button.secondary{background:#e2e8f0; color:#111827}
     button:disabled{opacity:.5; cursor:not-allowed}
-
     .play{margin-top:16px; display:grid; grid-template-columns:1fr; gap:16px; align-items:start}
-    @media (min-width:740px){
-      .play{grid-template-columns:1.1fr .9fr}
-    }
-    .problem{display:flex; flex-direction:column; gap:12px}
-    .problem .q{font-size:clamp(28px,5vw,48px); font-weight:800; text-align:center}
+    @media (min-width:860px){ .play{grid-template-columns:1.1fr .9fr} }
+    .q{font-size:clamp(18px,2.2vw,20px); font-weight:600; text-align:center}
+    .big{font-size:clamp(28px,5vw,48px); font-weight:800; text-align:center}
     .answer{display:flex; gap:10px}
     .answer input{flex:1; text-align:center; font-weight:700; font-size:20px}
-
     .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
     .stat{background:#f8fafc; border-radius:14px; padding:12px}
     .stat .label{font-size:12px; color:var(--muted)}
     .stat .value{font-size:22px; font-weight:800}
-
     .progress{height:12px; background:#e5e7eb; border-radius:999px; overflow:hidden}
     .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--brand), #06b6d4); transition:width .25s ease}
-
     .feedback{min-height:28px; font-weight:700}
-    .feedback.ok{color:var(--right)}
-    .feedback.no{color:var(--wrong)}
-
+    .feedback.ok{color:var(--right)} .feedback.no{color:var(--wrong)}
     .timer{font-variant-numeric:tabular-nums; font-weight:800}
-
     .tiny{font-size:12px; color:var(--muted)}
-
+    /* Klocka-spec */
+    .clock-wrap{display:flex; flex-direction:column; gap:8px; align-items:center}
+    canvas.clock{width:260px; height:260px; max-width:100%; aspect-ratio:1/1}
+    .period{font-size:14px; text-align:center; color:var(--muted)}
+    .big-digital{font-size:clamp(42px,6vw,64px); font-weight:800; letter-spacing:1px; text-align:center}
+    .ranges{display:grid; grid-template-columns:1fr; gap:8px}
+    @media (min-width:560px){ .ranges{grid-template-columns:1fr 1fr} }
     /* konfetti */
     .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden}
     .confetti i{position:absolute; width:10px; height:14px; opacity:0; transform:translateY(-20px) rotate(0deg); border-radius:3px}
     @keyframes pop{to{transform:translateY(100vh) rotate(720deg); opacity:1}}
+    /* App-växel */
+    .switcher{display:flex; gap:12px; align-items:center}
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <h1>Matteövning</h1>
+      <div class="switcher">
+        <h1>Övningar</h1>
+        <select id="appSelect" title="Välj övning">
+          <option value="math" selected>Matematik</option>
+          <option value="clock">Klocka</option>
+        </select>
+      </div>
       <div class="tiny">Allt körs lokalt i din webbläsare</div>
     </header>
-    <section class="card controls">
+
+    <!-- ========== MATEMATIK ========== -->
+    <section id="mathControls" class="card controls">
       <fieldset>
         <legend>Räknesätt</legend>
         <div class="row">
-          <label><input type="checkbox" id="opAdd" checked> Addition (+)</label>
-          <label><input type="checkbox" id="opSub" checked> Subtraktion (−)</label>
-          <label><input type="checkbox" id="opMul" checked> Multiplikation (×)</label>
+          <label><input type="checkbox" id="m_opAdd" checked> Addition (+)</label>
+          <label><input type="checkbox" id="m_opSub" checked> Subtraktion (−)</label>
+          <label><input type="checkbox" id="m_opMul" checked> Multiplikation (×)</label>
         </div>
       </fieldset>
       <fieldset>
         <legend>Svårighetsgrad</legend>
         <div class="row">
-          <select id="difficulty">
+          <select id="m_difficulty">
             <option value="easy">Lätt (0–10)</option>
             <option value="medium" selected>Medel (0–20)</option>
             <option value="hard">Svår (0–99)</option>
           </select>
-          <select id="timesTable">
+          <select id="m_timesTable">
             <option value="mix" selected>Tabell: Blanda</option>
-            <option value="1">Tabell 1</option>
-            <option value="2">Tabell 2</option>
-            <option value="3">Tabell 3</option>
-            <option value="4">Tabell 4</option>
-            <option value="5">Tabell 5</option>
-            <option value="6">Tabell 6</option>
-            <option value="7">Tabell 7</option>
-            <option value="8">Tabell 8</option>
-            <option value="9">Tabell 9</option>
-            <option value="10">Tabell 10</option>
-            <option value="11">Tabell 11</option>
-            <option value="12">Tabell 12</option>
+            <option value="1">Tabell 1</option><option value="2">Tabell 2</option><option value="3">Tabell 3</option>
+            <option value="4">Tabell 4</option><option value="5">Tabell 5</option><option value="6">Tabell 6</option>
+            <option value="7">Tabell 7</option><option value="8">Tabell 8</option><option value="9">Tabell 9</option>
+            <option value="10">Tabell 10</option><option value="11">Tabell 11</option><option value="12">Tabell 12</option>
           </select>
         </div>
-        <div class="tiny">Tips: Välj en specifik tabell om du vill fokusera på multiplikationstabeller.</div>
+        <div class="tiny">Tips: välj en specifik tabell för att fokusera.</div>
       </fieldset>
       <fieldset>
         <legend>Läge</legend>
         <div class="row">
-          <select id="mode">
+          <select id="m_mode">
             <option value="practice" selected>Öva (lugnt tempo)</option>
             <option value="challenge">Snabb utmaning (timer)</option>
           </select>
-          <select id="duration">
+          <select id="m_duration">
             <option value="30">30 sek</option>
             <option value="60" selected>60 sek</option>
             <option value="120">120 sek</option>
           </select>
-          <button id="startBtn">Starta</button>
-          <button id="stopBtn" class="secondary" disabled>Stoppa</button>
+          <button id="m_start">Starta</button>
+          <button id="m_stop" class="secondary" disabled>Stoppa</button>
         </div>
       </fieldset>
     </section>
 
-    <section class="play">
-      <div class="card problem">
-        <div class="q" id="question">Klicka på Starta för att börja</div>
+    <section id="mathPlay" class="play">
+      <div class="card">
+        <div class="q big" id="m_question">Klicka på Starta för att börja</div>
         <div class="answer">
-          <input id="answer" type="number" inputmode="numeric" placeholder="Skriv svaret här" disabled />
-          <button id="submitBtn" disabled>Svara</button>
+          <input id="m_answer" type="number" inputmode="numeric" placeholder="Skriv svaret här" disabled />
+          <button id="m_submit" disabled>Svara</button>
         </div>
-        <div class="feedback" id="feedback"></div>
-        <div class="progress"><div class="bar" id="progBar"></div></div>
+        <div class="feedback" id="m_feedback"></div>
+        <div class="progress"><div class="bar" id="m_progBar"></div></div>
+      </div>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="label">Poäng</div><div class="value" id="m_score">0</div></div>
+          <div class="stat"><div class="label">Rätt i rad</div><div class="value" id="m_streak">0</div></div>
+          <div class="stat"><div class="label">Frågor</div><div class="value" id="m_count">0</div></div>
+          <div class="stat"><div class="label">Tid</div><div class="value timer" id="m_time">–</div></div>
+        </div>
+        <div class="tiny" style="margin-top:8px">Högsta poäng (utmaning): <span id="m_highscore">0</span></div>
+      </div>
+    </section>
+
+    <!-- ========== KLOCKA ========== -->
+    <section id="clockControls" class="card controls" style="display:none">
+      <fieldset>
+        <legend>Övning</legend>
+        <div class="row">
+          <select id="c_exercise">
+            <option value="analog_read" selected>Läs analog → skriv HH:MM</option>
+            <option value="set_hands">Ställ visarna (matcha digital tid)</option>
+          </select>
+          <select id="c_step">
+            <option value="1">1 minut</option>
+            <option value="5" selected>5 minuter</option>
+            <option value="15">Kvart</option>
+            <option value="30">Halvtimme</option>
+          </select>
+        </div>
+        <div class="tiny">Skriv bara siffror – kolon sätts automatiskt (ex: 1715 → 17:15).</div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Läge</legend>
+        <div class="row">
+          <select id="c_mode">
+            <option value="practice" selected>Öva (lugnt tempo)</option>
+            <option value="challenge">Snabb utmaning (timer)</option>
+          </select>
+          <select id="c_duration">
+            <option value="30">30 sek</option>
+            <option value="60" selected>60 sek</option>
+            <option value="120">120 sek</option>
+          </select>
+          <button id="c_start">Starta</button>
+          <button id="c_stop" class="secondary" disabled>Stoppa</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Alternativ</legend>
+        <div class="row">
+          <label><input type="checkbox" id="c_showNumbers" checked> Visa siffror på urtavlan</label>
+        </div>
+      </fieldset>
+    </section>
+
+    <section id="clockPlay" class="play" style="display:none">
+      <div class="card">
+        <div class="q" id="c_prompt">Klicka på Starta för att börja</div>
+
+        <!-- analog_read -->
+        <div class="clock-wrap" id="c_clockWrap" style="display:none">
+          <canvas id="c_clock" class="clock" width="320" height="320" aria-label="Analog klocka"></canvas>
+          <div class="period" id="c_period" aria-live="polite"></div>
+        </div>
+
+        <!-- set_hands -->
+        <div id="c_digital" class="big-digital" style="display:none">--:--</div>
+        <div class="ranges" id="c_ranges" style="display:none">
+          <div>
+            <label for="c_hourRange">Timvisare</label>
+            <input id="c_hourRange" type="range" min="0" max="11" step="1" value="0">
+          </div>
+          <div>
+            <label for="c_minRange">Minutvisare</label>
+            <input id="c_minRange" type="range" min="0" max="59" step="5" value="0">
+          </div>
+          <div style="grid-column:1/-1; text-align:center" class="tiny">Din klocka (förhandsvisning):</div>
+          <div style="grid-column:1/-1; display:flex; justify-content:center">
+            <canvas id="c_preview" class="clock" width="220" height="220" aria-label="Din klocka"></canvas>
+          </div>
+        </div>
+
+        <div class="answer" id="c_answerRow">
+          <input id="c_answer" type="text" inputmode="numeric" autocomplete="off" placeholder="" disabled />
+          <button id="c_submit" disabled>Svara</button>
+        </div>
+
+        <div class="feedback" id="c_feedback"></div>
+        <div class="progress"><div class="bar" id="c_progBar"></div></div>
       </div>
 
       <div class="card">
         <div class="stats">
-          <div class="stat"><div class="label">Poäng</div><div class="value" id="score">0</div></div>
-          <div class="stat"><div class="label">Rätt i rad</div><div class="value" id="streak">0</div></div>
-          <div class="stat"><div class="label">Frågor</div><div class="value" id="count">0</div></div>
-          <div class="stat"><div class="label">Tid</div><div class="value timer" id="time">–</div></div>
+          <div class="stat"><div class="label">Poäng</div><div class="value" id="c_score">0</div></div>
+          <div class="stat"><div class="label">Rätt i rad</div><div class="value" id="c_streak">0</div></div>
+          <div class="stat"><div class="label">Frågor</div><div class="value" id="c_count">0</div></div>
+          <div class="stat"><div class="label">Tid</div><div class="value timer" id="c_time">–</div></div>
         </div>
-        <div class="tiny" style="margin-top:8px">Högsta poäng (utmaning): <span id="highscore">0</span></div>
+        <div class="tiny" style="margin-top:8px">Högsta poäng (utmaning): <span id="c_highscore">0</span></div>
       </div>
     </section>
   </div>
+
+  <!-- gemensam konfetti-yta -->
   <div class="confetti" id="confetti"></div>
 
   <script>
-  ;(() => {
+  // ===== app-växel =====
+  (function appSwitcher(){
+    const sel = document.getElementById('appSelect');
+    const mathControls = document.getElementById('mathControls');
+    const mathPlay = document.getElementById('mathPlay');
+    const clockControls = document.getElementById('clockControls');
+    const clockPlay = document.getElementById('clockPlay');
+
+    function show(app){
+      const m = app==='math';
+      mathControls.style.display = m ? '' : 'none';
+      mathPlay.style.display = m ? '' : 'none';
+      clockControls.style.display = m ? 'none' : '';
+      clockPlay.style.display = m ? 'none' : '';
+    }
+    sel.addEventListener('change', ()=> show(sel.value));
+    show(sel.value);
+  })();
+
+  // ===== hjälpfunktioner som delas (konfetti + beep) =====
+  const confettiRoot = document.getElementById('confetti');
+  function popConfetti(){
+    const n = 80; const colors=['#60a5fa','#34d399','#fbbf24','#f472b6','#93c5fd','#fdba74'];
+    for(let i=0;i<n;i++){
+      const el=document.createElement('i');
+      el.style.left=Math.random()*100+'vw';
+      el.style.background=colors[Math.random()*colors.length|0];
+      el.style.animation=`pop ${800+Math.random()*900}ms ease-out forwards`;
+      el.style.transform=`translateY(-10px) rotate(${Math.random()*360}deg)`; el.style.opacity=.9;
+      confettiRoot.appendChild(el); setTimeout(()=>el.remove(),1800);
+    }
+  }
+  const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  function beep(freq=880, dur=120){
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination); o.type='sine';
+    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime+0.01);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur/1000);
+    o.stop(audioCtx.currentTime+dur/1000);
+  }
+  function rightSound(){beep(1046,120); setTimeout(()=>beep(1318,150),80)}
+  function wrongSound(){beep(196,160)}
+
+  // ===== MATTE =====
+  ;(()=> {
     const ui = {
-      opAdd: document.getElementById('opAdd'),
-      opSub: document.getElementById('opSub'),
-      opMul: document.getElementById('opMul'),
-      difficulty: document.getElementById('difficulty'),
-      timesTable: document.getElementById('timesTable'),
-      mode: document.getElementById('mode'),
-      duration: document.getElementById('duration'),
-      startBtn: document.getElementById('startBtn'),
-      stopBtn: document.getElementById('stopBtn'),
-      question: document.getElementById('question'),
-      answer: document.getElementById('answer'),
-      submitBtn: document.getElementById('submitBtn'),
-      feedback: document.getElementById('feedback'),
-      progBar: document.getElementById('progBar'),
-      score: document.getElementById('score'),
-      streak: document.getElementById('streak'),
-      count: document.getElementById('count'),
-      time: document.getElementById('time'),
-      confetti: document.getElementById('confetti'),
-      highscore: document.getElementById('highscore'),
-    }
-
-    const state = {
-      playing:false,
-      challenge:false,
-      remaining:0,
-      timerId:null,
-      score:0,
-      streak:0,
-      count:0,
-      a:0, b:0, op:'+', ans:0,
-    }
-
-    // Ljud (Web Audio) – inga filer krävs
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-    function beep(freq=880, dur=120){
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination);
-      o.type = 'sine'; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      g.gain.setValueAtTime(0.001, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + 0.01);
-      o.start();
-      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur/1000);
-      o.stop(audioCtx.currentTime + dur/1000);
-    }
-    function rightSound(){beep(1046,120); setTimeout(()=>beep(1318,150),80)}
-    function wrongSound(){beep(196,160)}
-
-    // Konfetti – enkel, performant
-    function popConfetti(){
-      const n = 80;
-      const colors = ['#60a5fa','#34d399','#fbbf24','#f472b6','#93c5fd','#fdba74'];
-      for(let i=0;i<n;i++){
-        const el = document.createElement('i');
-        el.style.left = Math.random()*100+'vw';
-        el.style.background = colors[Math.random()*colors.length|0];
-        el.style.animation = `pop ${800 + Math.random()*900}ms ease-out forwards`;
-        el.style.transform = `translateY(-10px) rotate(${Math.random()*360}deg)`;
-        el.style.opacity = .9;
-        ui.confetti.appendChild(el);
-        setTimeout(()=> el.remove(), 1800);
-      }
-    }
+      opAdd: document.getElementById('m_opAdd'),
+      opSub: document.getElementById('m_opSub'),
+      opMul: document.getElementById('m_opMul'),
+      difficulty: document.getElementById('m_difficulty'),
+      timesTable: document.getElementById('m_timesTable'),
+      mode: document.getElementById('m_mode'),
+      duration: document.getElementById('m_duration'),
+      start: document.getElementById('m_start'),
+      stop: document.getElementById('m_stop'),
+      question: document.getElementById('m_question'),
+      answer: document.getElementById('m_answer'),
+      submit: document.getElementById('m_submit'),
+      feedback: document.getElementById('m_feedback'),
+      progBar: document.getElementById('m_progBar'),
+      score: document.getElementById('m_score'),
+      streak: document.getElementById('m_streak'),
+      count: document.getElementById('m_count'),
+      time: document.getElementById('m_time'),
+      high: document.getElementById('m_highscore'),
+    };
+    const state = { playing:false, challenge:false, remaining:0, timerId:null, score:0, streak:0, count:0, a:0,b:0,op:'+',ans:0 };
 
     function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-
-    function ranges(){
-      const d = ui.difficulty.value;
-      if(d==='easy') return [0,10]
-      if(d==='medium') return [0,20]
-      return [0,99]
-    }
-
+    function ranges(){ const d=ui.difficulty.value; if(d==='easy')return[0,10]; if(d==='medium')return[0,20]; return[0,99]; }
     function chooseOp(){
-      const ops = []
-      if(ui.opAdd.checked) ops.push('+')
-      if(ui.opSub.checked) ops.push('−')
-      if(ui.opMul.checked) ops.push('×')
-      if(ops.length===0){ ops.push('+') }
-      // Om specifik tabell valts, prioritera multiplikation
-      if(ui.timesTable.value!== 'mix') return '×'
-      return ops[Math.random()*ops.length|0]
+      const ops=[]; if(ui.opAdd.checked)ops.push('+'); if(ui.opSub.checked)ops.push('−'); if(ui.opMul.checked)ops.push('×');
+      if(ops.length===0) ops.push('+'); if(ui.timesTable.value!=='mix') return '×'; return ops[Math.random()*ops.length|0];
+    }
+    function nextProblem(){
+      const [min,max]=ranges(); let a=0,b=0,op=chooseOp(),ans=0;
+      if(op==='×'){
+        const tbl=ui.timesTable.value;
+        a = (tbl==='mix') ? randInt(min, max>12?12:max) : parseInt(tbl,10);
+        b = randInt(0,12); ans=a*b;
+      } else if(op==='−'){ a=randInt(min,max); b=randInt(min,max); if(b>a)[a,b]=[b,a]; ans=a-b; }
+      else { a=randInt(min,max); b=randInt(min,max); ans=a+b; }
+      Object.assign(state,{a,b,op,ans});
+      ui.question.textContent=`${a} ${op} ${b} = ?`; ui.answer.value=''; ui.answer.focus();
+    }
+    function updateStats(){
+      ui.score.textContent=state.score; ui.streak.textContent=state.streak; ui.count.textContent=state.count;
+      if(state.challenge){
+        const total=parseInt(ui.duration.value,10); const gone=total-state.remaining;
+        ui.progBar.style.width = Math.max(0,Math.min(100,(gone/total)*100))+'%';
+      } else ui.progBar.style.width = Math.min(100,(state.streak/10)*100)+'%';
+    }
+    function showFeedback(ok,correct){ ui.feedback.className='feedback '+(ok?'ok':'no'); ui.feedback.textContent= ok?'Rätt! Bra jobbat! 🎉':`Inte riktigt. Rätt svar är ${correct}. Försök igen!`; }
+    function checkAnswer(){
+      if(!state.playing) return;
+      const ok = Number(ui.answer.value)===state.ans; state.count++;
+      if(ok){ state.score+=10; state.streak++; showFeedback(true); rightSound(); popConfetti(); nextProblem(); }
+      else { state.streak=0; showFeedback(false,state.ans); wrongSound(); }
+      updateStats();
+    }
+    function setPlaying(on){
+      state.playing=on; ui.answer.disabled=!on; ui.submit.disabled=!on; ui.stop.disabled=!on; ui.start.disabled=on;
+      if(!on){ ui.progBar.style.width='0%'; ui.time.textContent='–'; }
+    }
+    function startPractice(){ state.challenge=false; state.score=0; state.streak=0; state.count=0; ui.feedback.textContent=''; setPlaying(true); nextProblem(); updateStats(); }
+    function startChallenge(){ state.challenge=true; state.score=0; state.streak=0; state.count=0; state.remaining=parseInt(ui.duration.value,10); ui.feedback.textContent=''; setPlaying(true); nextProblem(); updateStats(); tick(); }
+    function tick(){ if(!state.playing||!state.challenge) return; ui.time.textContent=state.remaining+' s'; if(state.remaining<=0){ endChallenge(); return; } state.remaining--; updateStats(); state.timerId=setTimeout(tick,1000); }
+    function endChallenge(){
+      clearTimeout(state.timerId); state.timerId=null; setPlaying(false);
+      ui.question.textContent='Tiden är slut!'; ui.feedback.textContent=`Du fick ${state.score} poäng på ${ui.duration.value} sekunder.`;
+      const key='matte_highscore_'+ui.duration.value; const best=parseInt(localStorage.getItem(key)||'0',10);
+      if(state.score>best) localStorage.setItem(key,String(state.score)); refreshHigh();
+    }
+    function refreshHigh(){ const key='matte_highscore_'+ui.duration.value; ui.high.textContent=parseInt(localStorage.getItem(key)||'0',10); }
+    function stopAll(){ clearTimeout(state.timerId); state.timerId=null; setPlaying(false); ui.question.textContent='Klicka på Starta för att börja'; ui.feedback.textContent=''; }
+
+    // events
+    ui.start.addEventListener('click', ()=> ui.mode.value==='challenge'?startChallenge():startPractice());
+    ui.stop.addEventListener('click', stopAll);
+    ui.submit.addEventListener('click', checkAnswer);
+    ui.answer.addEventListener('keydown', e=>{ if(e.key==='Enter') checkAnswer(); });
+    ui.mode.addEventListener('change', refreshHigh);
+    ui.duration.addEventListener('change', refreshHigh);
+
+    refreshHigh();
+  })();
+
+  // ===== KLOCKA =====
+  ;(()=> {
+    const ui = {
+      exercise: document.getElementById('c_exercise'),
+      step: document.getElementById('c_step'),
+      mode: document.getElementById('c_mode'),
+      duration: document.getElementById('c_duration'),
+      start: document.getElementById('c_start'),
+      stop: document.getElementById('c_stop'),
+      showNumbers: document.getElementById('c_showNumbers'),
+      prompt: document.getElementById('c_prompt'),
+      clockWrap: document.getElementById('c_clockWrap'),
+      clock: document.getElementById('c_clock'),
+      period: document.getElementById('c_period'),
+      digital: document.getElementById('c_digital'),
+      ranges: document.getElementById('c_ranges'),
+      hourRange: document.getElementById('c_hourRange'),
+      minRange: document.getElementById('c_minRange'),
+      preview: document.getElementById('c_preview'),
+      answerRow: document.getElementById('c_answerRow'),
+      answer: document.getElementById('c_answer'),
+      submit: document.getElementById('c_submit'),
+      feedback: document.getElementById('c_feedback'),
+      progBar: document.getElementById('c_progBar'),
+      score: document.getElementById('c_score'),
+      streak: document.getElementById('c_streak'),
+      count: document.getElementById('c_count'),
+      time: document.getElementById('c_time'),
+      high: document.getElementById('c_highscore'),
+    };
+    const state = { playing:false, challenge:false, remaining:0, timerId:null, score:0, streak:0, count:0, target:{h:0,m:0}, step:5, morningNext:true };
+
+    // utils
+    function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+    function clamp(v,min,max){return Math.min(max,Math.max(min,v))}
+    function fmt(h,m){return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')}
+    function parseTime(str){ const d=String(str).replace(/\D/g,'').slice(0,4); if(d.length<3)return null; const h=d.length===3?Number(d[0]):Number(d.slice(0,2)); const mi=Number(d.slice(-2)); if(h>23||mi>59)return null; return {h,m:mi}; }
+    function randTime(step){ const morning=state.morningNext; state.morningNext=!state.morningNext; const h = morning?randInt(0,11):randInt(12,23); const k=randInt(0,(60/step|0)-1); return {h, m:k*step}; }
+    function drawClock(canvas, h, m, withNumbers){
+      const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height; const r=Math.min(W,H)/2-10;
+      ctx.clearRect(0,0,W,H); ctx.save(); ctx.translate(W/2,H/2);
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+      ctx.lineWidth=4; ctx.strokeStyle='#e5e7eb'; ctx.stroke();
+      for(let i=0;i<60;i++){
+        const a=(Math.PI*2)*(i/60)-Math.PI/2, len=(i%5===0)?14:6;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a)*(r-len-8), Math.sin(a)*(r-len-8));
+        ctx.lineTo(Math.cos(a)*(r-8), Math.sin(a)*(r-8));
+        ctx.lineWidth=(i%5===0)?3:1.5; ctx.strokeStyle=(i%5===0)?'#cbd5e1':'#e5e7eb'; ctx.stroke();
+      }
+      if(withNumbers){
+        ctx.fillStyle='#1f2937'; ctx.font=`${r*0.16}px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        for(let n=1;n<=12;n++){ const a=(Math.PI*2)*(n/12)-Math.PI/2, rr=r-36; ctx.fillText(String(n), Math.cos(a)*rr, Math.sin(a)*rr); }
+      }
+      const minA=(Math.PI*2)*(m/60)-Math.PI/2, hourA=(Math.PI*2)*(((h%12)+m/60)/12)-Math.PI/2;
+      ctx.strokeStyle='#111827'; ctx.lineCap='round';
+      ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(hourA)*(r*0.5), Math.sin(hourA)*(r*0.5)); ctx.stroke();
+      ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(minA)*(r*0.75), Math.sin(minA)*(r*0.75)); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fillStyle='#2563eb'; ctx.fill();
+      ctx.restore();
+    }
+    function updatePreview(){ drawClock(ui.preview, Number(ui.hourRange.value), Number(ui.minRange.value), ui.showNumbers.checked); }
+    function periodLabel(h){ return h<12 ? 'Morgon (00–11) 🌞' : 'Kväll (12–23) 🌙'; }
+
+    function setupView(){
+      const ex=ui.exercise.value, isSet=ex==='set_hands', isRead=ex==='analog_read';
+      ui.clockWrap.style.display = isRead ? 'flex':'none';
+      ui.digital.style.display = isSet ? 'block':'none';
+      ui.ranges.style.display = isSet ? 'grid':'none';
+      ui.answer.style.display = isSet ? 'none':'block';
+      ui.submit.disabled = !state.playing;
+      ui.answer.disabled = !state.playing || isSet;
+      state.step = parseInt(ui.step.value,10);
+      ui.minRange.step = String(state.step);
     }
 
-    function nextProblem(){
-      const [min,max] = ranges();
-      let a=0,b=0,op=chooseOp(), ans=0
-
-      if(op==='×'){
-        const tbl = ui.timesTable.value
-        if(tbl==='mix'){
-          a = randInt(min, max>12?12:max)
-        } else {
-          a = parseInt(tbl,10)
-        }
-        b = randInt(0, 12)
-        ans = a*b
-      } else if(op==='−'){
-        a = randInt(min,max); b = randInt(min,max)
-        if(b>a) [a,b]=[b,a] // undvik negativa
-        ans = a-b
-      } else { // +
-        a = randInt(min,max); b = randInt(min,max)
-        ans = a+b
+    function nextTask(){
+      setupView();
+      state.target = randTime(parseInt(ui.step.value,10));
+      const ex=ui.exercise.value;
+      if(ex==='analog_read'){
+        ui.prompt.textContent='Vad är klockan? Skriv i format HH:MM';
+        drawClock(ui.clock, state.target.h, state.target.m, ui.showNumbers.checked);
+        ui.period.textContent='Det är: '+periodLabel(state.target.h);
+        ui.answer.value=''; ui.answer.focus(); ui.digital.textContent='--:--';
+      } else {
+        ui.prompt.textContent='Ställ visarna så att klockan blir:';
+        ui.digital.textContent = fmt(state.target.h, state.target.m);
+        ui.hourRange.value='0'; ui.minRange.value='0'; updatePreview();
       }
-      state.a=a; state.b=b; state.op=op; state.ans=ans
-      ui.question.textContent = `${a} ${op} ${b} = ?`
-      ui.answer.value = ''
-      ui.answer.focus()
     }
 
     function updateStats(){
-      ui.score.textContent = state.score
-      ui.streak.textContent = state.streak
-      ui.count.textContent = state.count
+      ui.score.textContent=state.score; ui.streak.textContent=state.streak; ui.count.textContent=state.count;
       if(state.challenge){
-        const total = parseInt(ui.duration.value,10)
-        const gone = total - state.remaining
-        const pct = Math.max(0, Math.min(100, (gone/total)*100))
-        ui.progBar.style.width = pct + '%'
-      } else {
-        // använd streak som en liten progress-känsla upp till 10
-        const pct = Math.min(100, (state.streak/10)*100)
-        ui.progBar.style.width = pct + '%'
-      }
+        const total=parseInt(ui.duration.value,10), gone=total-state.remaining;
+        ui.progBar.style.width=Math.max(0,Math.min(100,(gone/total)*100))+'%';
+      } else ui.progBar.style.width=Math.min(100,(state.streak/10)*100)+'%';
     }
-
-    function showFeedback(ok, correctAns){
-      ui.feedback.className = 'feedback ' + (ok? 'ok':'no')
-      ui.feedback.textContent = ok ? 'Rätt! Bra jobbat! 🎉' : `Inte riktigt. Rätt svar är ${correctAns}. Försök igen!`
-    }
-
+    function showFeedback(ok){ ui.feedback.className='feedback '+(ok?'ok':'no'); ui.feedback.textContent = ok?'Rätt! 🎉':`Inte riktigt. Rätt tid är ${fmt(state.target.h, state.target.m)}.`; }
+    function setPlaying(on){ state.playing=on; ui.stop.disabled=!on; ui.start.disabled=on; if(!on){ ui.progBar.style.width='0%'; ui.time.textContent='–' } setupView(); }
+    function startPractice(){ state.challenge=false; state.score=0; state.streak=0; state.count=0; ui.feedback.textContent=''; setPlaying(true); nextTask(); updateStats(); }
+    function startChallenge(){ state.challenge=true; state.score=0; state.streak=0; state.count=0; state.remaining=parseInt(ui.duration.value,10); ui.feedback.textContent=''; setPlaying(true); nextTask(); updateStats(); tick(); }
+    function tick(){ if(!state.playing||!state.challenge) return; ui.time.textContent=state.remaining+' s'; if(state.remaining<=0){ endChallenge(); return; } state.remaining--; updateStats(); state.timerId=setTimeout(tick,1000); }
+    function endChallenge(){ clearTimeout(state.timerId); state.timerId=null; setPlaying(false); ui.prompt.textContent='Tiden är slut!'; ui.feedback.textContent=`Du fick ${state.score} poäng på ${ui.duration.value} sekunder.`; const key='clock_highscore_'+ui.duration.value; const best=parseInt(localStorage.getItem(key)||'0',10); if(state.score>best){ localStorage.setItem(key,String(state.score)); } refreshHigh(); }
+    function refreshHigh(){ const key='clock_highscore_'+ui.duration.value; ui.high.textContent=parseInt(localStorage.getItem(key)||'0',10); }
+    function handleCorrect(){ state.count++; state.score+=10; state.streak++; showFeedback(true); rightSound(); popConfetti(); nextTask(); updateStats(); }
+    function handleWrong(){ state.count++; state.streak=0; showFeedback(false); wrongSound(); updateStats(); }
     function checkAnswer(){
-      if(!state.playing) return
-      const val = Number(ui.answer.value)
-      const ok = (val === state.ans)
-      state.count++
-      if(ok){
-        state.score += 10
-        state.streak++
-        showFeedback(true)
-        rightSound()
-        popConfetti()
-        nextProblem()
+      if(!state.playing) return;
+      if(ui.exercise.value==='set_hands'){
+        const hr12=Number(ui.hourRange.value), min=Number(ui.minRange.value);
+        const equal = (hr12===(state.target.h%12)) && (min===state.target.m);
+        equal ? handleCorrect() : handleWrong();
       } else {
-        state.streak = 0
-        showFeedback(false, state.ans)
-        wrongSound()
-        // låt samma uppgift stå kvar, uppmuntra försök igen
+        const parsed = parseTime(ui.answer.value);
+        if(!parsed){ ui.feedback.className='feedback no'; ui.feedback.textContent='Skriv fyra siffror (HHMM), t.ex. 0715.'; wrongSound(); return; }
+        (parsed.h===state.target.h && parsed.m===state.target.m) ? handleCorrect() : handleWrong();
       }
-      updateStats()
     }
+    function stopAll(){ clearTimeout(state.timerId); state.timerId=null; setPlaying(false); ui.prompt.textContent='Klicka på Starta för att börja'; ui.feedback.textContent=''; ui.digital.textContent='--:--'; ui.period.textContent=''; const c1=ui.clock.getContext('2d'); c1.clearRect(0,0,ui.clock.width,ui.clock.height); const c2=ui.preview.getContext('2d'); c2.clearRect(0,0,ui.preview.width,ui.preview.height); }
+    function autoColon(e){ const digits=e.target.value.replace(/\D/g,'').slice(0,4); e.target.value = digits.length<=2?digits:digits.slice(0,2)+':'+digits.slice(2,4); e.target.setSelectionRange(e.target.value.length,e.target.value.length); }
 
-    function setPlaying(on){
-      state.playing = on
-      ui.answer.disabled = !on
-      ui.submitBtn.disabled = !on
-      ui.stopBtn.disabled = !on
-      ui.startBtn.disabled = on
-      if(!on){ ui.progBar.style.width = '0%'; ui.time.textContent='–' }
-    }
+    // events
+    ui.start.addEventListener('click', ()=> ui.mode.value==='challenge'?startChallenge():startPractice());
+    ui.stop.addEventListener('click', stopAll);
+    ui.submit.addEventListener('click', checkAnswer);
+    ui.answer.addEventListener('keydown', e=>{ if(e.key==='Enter') checkAnswer(); });
+    ui.answer.addEventListener('input', autoColon);
+    ui.mode.addEventListener('change', refreshHigh);
+    ui.duration.addEventListener('change', refreshHigh);
+    ui.exercise.addEventListener('change', ()=>{ if(state.playing) nextTask(); else setupView(); });
+    ui.step.addEventListener('change', ()=>{ state.step=parseInt(ui.step.value,10); ui.minRange.step=ui.step.value; if(state.playing) nextTask(); });
+    ui.showNumbers.addEventListener('change', ()=>{ if(!state.playing) return; if(ui.exercise.value==='analog_read'){ drawClock(ui.clock, state.target.h, state.target.m, ui.showNumbers.checked); } updatePreview(); });
+    ui.hourRange.addEventListener('input', updatePreview);
+    ui.minRange.addEventListener('input', ()=>{ const step=parseInt(ui.step.value,10); const v=Number(ui.minRange.value); const s=clamp(step*Math.round(v/step),0,59); if(s!==v) ui.minRange.value=String(s); updatePreview(); });
 
-    function startPractice(){
-      state.challenge = false
-      state.score=0; state.streak=0; state.count=0
-      ui.feedback.textContent = ''
-      setPlaying(true)
-      nextProblem(); updateStats()
-    }
-
-    function startChallenge(){
-      state.challenge = true
-      state.score=0; state.streak=0; state.count=0
-      state.remaining = parseInt(ui.duration.value,10)
-      ui.feedback.textContent = ''
-      setPlaying(true)
-      nextProblem(); updateStats()
-      tick()
-    }
-
-    function tick(){
-      if(!state.playing || !state.challenge) return
-      ui.time.textContent = state.remaining + ' s'
-      if(state.remaining<=0){
-        endChallenge()
-        return
-      }
-      state.remaining--
-      updateStats()
-      state.timerId = setTimeout(tick, 1000)
-    }
-
-    function endChallenge(){
-      clearTimeout(state.timerId)
-      state.timerId=null
-      setPlaying(false)
-      ui.question.textContent = 'Tiden är slut!'
-      ui.feedback.textContent = `Du fick ${state.score} poäng på ${ui.duration.value} sekunder.`
-      // spara highscore
-      const key = 'matte_highscore_' + ui.duration.value
-      const best = parseInt(localStorage.getItem(key)||'0',10)
-      if(state.score>best){
-        localStorage.setItem(key, String(state.score))
-      }
-      refreshHighscore()
-    }
-
-    function refreshHighscore(){
-      const key = 'matte_highscore_' + ui.duration.value
-      const best = parseInt(localStorage.getItem(key)||'0',10)
-      ui.highscore.textContent = best
-    }
-
-    function stopAll(){
-      clearTimeout(state.timerId); state.timerId=null
-      setPlaying(false)
-      ui.question.textContent = 'Klicka på Starta för att börja'
-      ui.feedback.textContent = ''
-    }
-
-    // Events
-    ui.startBtn.addEventListener('click', ()=>{
-      (ui.mode.value==='challenge') ? startChallenge() : startPractice()
-    })
-    ui.stopBtn.addEventListener('click', stopAll)
-    ui.submitBtn.addEventListener('click', checkAnswer)
-    ui.answer.addEventListener('keydown', (e)=>{
-      if(e.key==='Enter') checkAnswer()
-    })
-    ui.mode.addEventListener('change', ()=>{
-      document.querySelector('label[for="duration"]')
-      refreshHighscore();
-    })
-    ui.duration.addEventListener('change', refreshHighscore)
-
-    // Init
-    refreshHighscore()
-  })()
+    // init
+    (function init(){ setupView(); refreshHigh(); drawClock(ui.preview,0,0,ui.showNumbers.checked); })();
+  })();
   </script>
 </body>
 </html>
